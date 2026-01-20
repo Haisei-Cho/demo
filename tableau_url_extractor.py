@@ -51,18 +51,22 @@ def get_project_views(server_url: str, username: str, password: str,
         workbooks = [wb for wb in all_workbooks if wb.project_id == target_project.id]
         print(f"{len(workbooks)}件のWorkbookを検出（全{len(all_workbooks)}件中）")
 
-        # 各WorkbookのViewを取得
+        # 各WorkbookのViewを取得（Dashboardのみ）
         for wb in workbooks:
             server.workbooks.populate_views(wb)
+            dashboard_count = 0
             for view in wb.views:
-                view_info = {
-                    "workbook_name": wb.name,
-                    "view_name": view.name,
-                    "content_url": view.content_url,
-                    "tabjolt_url": f"/views/{view.content_url}"
-                }
-                all_views.append(view_info)
-            print(f"  - {wb.name}: {len(wb.views)}件のView")
+                # sheet_typeが'dashboard'のもののみ取得
+                if view.sheet_type == 'dashboard':
+                    view_info = {
+                        "workbook_name": wb.name,
+                        "view_name": view.name,
+                        "content_url": view.content_url,
+                        "tabjolt_url": f"/views/{view.content_url}"
+                    }
+                    all_views.append(view_info)
+                    dashboard_count += 1
+            print(f"  - {wb.name}: {dashboard_count}件のDashboard")
 
     return all_views
 
