@@ -45,16 +45,11 @@ def get_project_views(server_url: str, username: str, password: str,
 
         print(f"Project検出: {target_project.name} (ID: {target_project.id})")
 
-        # 該当Project配下の全Workbookを取得
-        req_options = TSC.RequestOptions()
-        req_options.filter.add(TSC.Filter(
-            TSC.RequestOptions.Field.ProjectId,
-            TSC.RequestOptions.Operator.Equals,
-            target_project.id
-        ))
-
-        workbooks, _ = server.workbooks.get(req_options)
-        print(f"{len(workbooks)}件のWorkbookを検出")
+        # 全Workbookを取得し、クライアント側でProjectでフィルタリング
+        # 注意: ProjectIdはサーバー側フィルタリングに対応していないため
+        all_workbooks = list(TSC.Pager(server.workbooks))
+        workbooks = [wb for wb in all_workbooks if wb.project_id == target_project.id]
+        print(f"{len(workbooks)}件のWorkbookを検出（全{len(all_workbooks)}件中）")
 
         # 各WorkbookのViewを取得
         for wb in workbooks:
