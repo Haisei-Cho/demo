@@ -51,22 +51,25 @@ def get_project_views(server_url: str, username: str, password: str,
         workbooks = [wb for wb in all_workbooks if wb.project_id == target_project.id]
         print(f"{len(workbooks)}件のWorkbookを検出（全{len(all_workbooks)}件中）")
 
-        # 各WorkbookのViewを取得（Dashboardのみ）
-        for wb in workbooks:
-            server.workbooks.populate_views(wb)
-            dashboard_count = 0
-            for view in wb.views:
-                # sheet_typeが'dashboard'のもののみ取得
-                if view.sheet_type == 'dashboard':
-                    view_info = {
-                        "workbook_name": wb.name,
-                        "view_name": view.name,
-                        "content_url": view.content_url,
-                        "tabjolt_url": f"/views/{view.content_url}"
-                    }
-                    all_views.append(view_info)
-                    dashboard_count += 1
-            print(f"  - {wb.name}: {dashboard_count}件のDashboard")
+        # Workbook IDのセットを作成
+        workbook_ids = {wb.id for wb in workbooks}
+        workbook_name_map = {wb.id: wb.name for wb in workbooks}
+
+        # 全Viewを取得（sheet_type情報を含む）
+        all_server_views = list(TSC.Pager(server.views))
+
+        # 該当ProjectのWorkbookに属するDashboardのみフィルタリング
+        for view in all_server_views:
+            if view.workbook_id in workbook_ids and view.sheet_type == 'dashboard':
+                view_info = {
+                    "workbook_name": workbook_name_map.get(view.workbook_id, "Unknown"),
+                    "view_name": view.name,
+                    "content_url": view.content_url,
+                    "tabjolt_url": f"/views/{view.content_url}"
+                }
+                all_views.append(view_info)
+
+        print(f"{len(all_views)}件のDashboardを検出")
 
     return all_views
 
