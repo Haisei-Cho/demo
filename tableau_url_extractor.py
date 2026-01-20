@@ -55,12 +55,18 @@ def get_project_views(server_url: str, username: str, password: str,
         workbook_ids = {wb.id for wb in workbooks}
         workbook_name_map = {wb.id: wb.name for wb in workbooks}
 
-        # 全Viewを取得（sheet_type情報を含む）
+        # 全Viewを取得
         all_server_views = list(TSC.Pager(server.views))
 
-        # 該当ProjectのWorkbookに属するDashboardのみフィルタリング
-        for view in all_server_views:
-            if view.workbook_id in workbook_ids and view.sheet_type == 'dashboard':
+        # 該当ProjectのWorkbookに属するViewをフィルタリング
+        project_views = [v for v in all_server_views if v.workbook_id in workbook_ids]
+        print(f"{len(project_views)}件のViewを検出")
+
+        # 各Viewの詳細情報を取得してsheet_typeを確認
+        for view in project_views:
+            # 個別にViewの詳細を取得（sheet_typeが含まれる）
+            view_detail = server.views.get_by_id(view.id)
+            if view_detail.sheet_type == 'dashboard':
                 view_info = {
                     "workbook_name": workbook_name_map.get(view.workbook_id, "Unknown"),
                     "view_name": view.name,
@@ -68,8 +74,9 @@ def get_project_views(server_url: str, username: str, password: str,
                     "tabjolt_url": f"/views/{view.content_url}"
                 }
                 all_views.append(view_info)
+                print(f"  Dashboard: {view.name}")
 
-        print(f"{len(all_views)}件のDashboardを検出")
+        print(f"\n{len(all_views)}件のDashboardを検出")
 
     return all_views
 
